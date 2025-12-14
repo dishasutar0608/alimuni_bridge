@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alumni Bridge | Connect & Grow</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Loader Animation */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #2563eb;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Toast Notification */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50;
+        }
+        .toast {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center cursor-pointer" onclick="router('home')">
+                    <i class="fa-solid fa-graduation-cap text-blue-600 text-2xl mr-2"></i>
+                    <span class="font-bold text-xl text-gray-900 tracking-tight">Alumni<span class="text-blue-600">Bridge</span></span>
+                </div>
+                
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-8" id="nav-links">
+                    <button onclick="router('mentors')" class="text-gray-500 hover:text-blue-600 font-medium transition">Find Mentors</button>
+                    <button onclick="router('jobs')" class="text-gray-500 hover:text-blue-600 font-medium transition">Job Board</button>
+                    <button onclick="router('stories')" class="text-gray-500 hover:text-blue-600 font-medium transition">Success Stories</button>
+                </div>
+
+                <!-- Auth Buttons -->
+                <div class="flex items-center space-x-4">
+                    <div id="auth-buttons-logged-out">
+                        <button onclick="openModal('login-modal')" class="text-gray-600 hover:text-gray-900 font-medium px-3 py-2">Log In</button>
+                        <button onclick="openModal('signup-modal')" class="bg-blue-600 text-white px-4 py-2 rounded-full font-medium hover:bg-blue-700 transition shadow-md">Join Now</button>
+                    </div>
+                    <div id="auth-buttons-logged-in" class="hidden flex items-center gap-3">
+                        <span id="user-display-name" class="font-medium text-gray-700 hidden sm:block"></span>
+                        <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200" id="user-avatar">U</div>
+                        <button onclick="logoutUser()" class="text-sm text-red-500 hover:text-red-700 ml-2">Sign Out</button>
+                    </div>
+                    
+                    <!-- Mobile Menu Button -->
+                    <button class="md:hidden text-gray-500 focus:outline-none" onclick="document.getElementById('mobile-menu').classList.toggle('hidden')">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <button onclick="router('mentors')" class="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md">Find Mentors</button>
+                <button onclick="router('jobs')" class="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md">Job Board</button>
+                <button onclick="router('stories')" class="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-md">Success Stories</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="app-container" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[80vh]">
+        <!-- Views will be injected here via JS -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-gray-400 text-sm">&copy; 2024 AlumniBridge. Built for Hackathon.</p>
+        </div>
+    </footer>
+
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast-container"></div>
+
+    <!-- MODALS -->
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Welcome Back</h3>
+                <button onclick="closeModal('login-modal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <input type="email" id="login-email" placeholder="Email Address" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <!-- Simple password for demo since we are mocking auth -->
+                <input type="password" id="login-password" placeholder="Password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition">Log In</button>
+            </form>
+            <p class="mt-4 text-center text-sm text-gray-600">Don't have an account? <button onclick="switchAuthModal('login-modal', 'signup-modal')" class="text-blue-600 hover:underline">Sign up</button></p>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-[30rem] shadow-lg rounded-xl bg-white max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Join the Community</h3>
+                <button onclick="closeModal('signup-modal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="signup-form" class="space-y-4">
+                <!-- Role Selection -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="Student" class="peer sr-only" checked onchange="toggleSignupFields()">
+                        <div class="rounded-lg border-2 border-gray-200 p-4 text-center hover:bg-gray-50 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition">
+                            <i class="fa-solid fa-user-graduate text-2xl mb-2 text-gray-600 peer-checked:text-blue-600"></i>
+                            <div class="font-medium text-gray-900">Student</div>
+                        </div>
+                    </label>
+                    <label class="cursor-pointer">
+                        <input type="radio" name="role" value="Alumni" class="peer sr-only" onchange="toggleSignupFields()">
+                        <div class="rounded-lg border-2 border-gray-200 p-4 text-center hover:bg-gray-50 peer-checked:border-blue-600 peer-checked:bg-blue-50 transition">
+                            <i class="fa-solid fa-briefcase text-2xl mb-2 text-gray-600 peer-checked:text-blue-600"></i>
+                            <div class="font-medium text-gray-900">Alumni</div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Common Fields -->
+                <input type="text" id="signup-name" placeholder="Full Name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="email" id="signup-email" placeholder="College Email" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="password" id="signup-password" placeholder="Create Password" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+
+                <!-- Student Fields -->
+                <div id="student-fields" class="space-y-4">
+                    <input type="text" id="signup-major" placeholder="Major / Branch (e.g. Computer Science)" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="signup-year" placeholder="Current Year (e.g. 3)" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <!-- Alumni Fields -->
+                <div id="alumni-fields" class="space-y-4 hidden">
+                    <input type="text" id="signup-company" placeholder="Current Company" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="signup-job" placeholder="Job Title" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="signup-gradyear" placeholder="Graduation Year" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Post Job Modal -->
+    <div id="post-job-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-[30rem] shadow-lg rounded-xl bg-white">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-900">Post a Job/Internship</h3>
+                <button onclick="closeModal('post-job-modal')" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="post-job-form" class="space-y-4">
+                <input type="text" id="job-title" placeholder="Job Title (e.g. Jr. React Dev)" class="w-full px-4 py-2 border rounded-lg" required>
+                <input type="text" id="job-company" placeholder="Company Name" class="w-full px-4 py-2 border rounded-lg" required>
+                <input type="url" id="job-link" placeholder="Application Link (http://...)" class="w-full px-4 py-2 border rounded-lg" required>
+                <textarea id="job-desc" placeholder="Brief Description & Requirements" class="w-full px-4 py-2 border rounded-lg h-24" required></textarea>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold">Post Opportunity</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Mentorship Request Modal -->
+    <div id="mentor-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Request Mentorship</h3>
+            <p class="text-sm text-gray-500 mb-4">Send a brief message to <span id="mentor-name-target" class="font-semibold">the mentor</span> explaining why you want to connect.</p>
+            <form id="mentor-request-form">
+                <input type="hidden" id="mentor-id-target">
+                <textarea id="mentor-msg" class="w-full border rounded-lg p-3 mb-4 h-32 focus:ring-2 focus:ring-blue-500" placeholder="Hi, I'm interested in your career path..." required></textarea>
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeModal('mentor-modal')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Send Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FIREBASE & APP LOGIC -->
+    <script type="module">
+        // --- 1. CONFIGURATION ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        // Using signInAnonymously to authenticate with the backend, but simulating app-level auth
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // Environment Configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyBmwSzT-62DNQFtTPJuDb6M98e9WDwGDTc",
+          authDomain: "fir-31def.firebaseapp.com",
+          projectId: "fir-31def",
+          storageBucket: "fir-31def.firebasestorage.app",
+          messagingSenderId: "479333850224",
+          appId: "1:479333850224:web:cf7e3a166811028c1568b5",
+          measurementId: "G-ND8LP85W1N"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- 2. STATE MANAGEMENT ---
+        // We are simulating "Login" by storing the user object in memory after fetching it from DB.
+        // This is necessary because in this hackathon environment we might not have Email/Password auth enabled on the backend.
+        let currentUser = null; 
+        
+        // Collection Paths
+        const COLLECTIONS = {
+            USERS: collection(db, 'users'),
+            JOBS: collection(db, 'jobs'),
+            REQUESTS: collection(db, 'mentorship_requests')
+        };
+
+        // --- 3. INITIALIZATION ---
+        
+        async function initApp() {
+            try {
+                // Authenticate with Firebase first (Required to access Firestore)
+                // We use anonymous auth to establish a secure connection to the DB
+                await signInAnonymously(auth);
+                
+                console.log("Connected to Backend.");
+                
+                // Check if we have a simulated session
+                const savedUser = localStorage.getItem('alumni_bridge_user');
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    updateAuthUI();
+                }
+
+                router('home'); // Load UI
+            } catch (error) {
+                console.error("Auth Error:", error);
+                // If this fails, it usually means 'Anonymous' auth isn't enabled in the console yet.
+                showToast("Connection Error: check console. Did you enable Anonymous Auth?", "error");
+            }
+        }
+
+        // --- 4. DOM ELEMENTS ---
+        const appContainer = document.getElementById('app-container');
+        const loggedInNav = document.getElementById('auth-buttons-logged-in');
+        const loggedOutNav = document.getElementById('auth-buttons-logged-out');
+
+        // --- 5. VIEWS (HTML TEMPLATES) ---
+        
+        const homeView = `
+            <div class="text-center py-16 lg:py-24">
+                <h1 class="text-4xl sm:text-6xl font-extrabold text-gray-900 tracking-tight mb-6">
+                    Connect with your <span class="text-blue-600">Future</span>.
+                </h1>
+                <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+                    The exclusive network for students and alumni. Find mentors, discover hidden job opportunities, and grow your career together.
+                </p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="openModal('signup-modal')" class="px-8 py-4 bg-blue-600 text-white rounded-full font-bold text-lg shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1">Get Started</button>
+                    <button onclick="router('mentors')" class="px-8 py-4 bg-white text-gray-700 border border-gray-300 rounded-full font-bold text-lg hover:bg-gray-50 transition">Browse Mentors</button>
+                </div>
+                
+                <div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-left max-w-5xl mx-auto">
+                    <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-users"></i></div>
+                        <h3 class="font-bold text-xl mb-2">Alumni Directory</h3>
+                        <p class="text-gray-500">Search graduates by company (Google, Amazon) or role to find the right connection.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-briefcase"></i></div>
+                        <h3 class="font-bold text-xl mb-2">Exclusive Jobs</h3>
+                        <p class="text-gray-500">Access internship and job referrals posted directly by alumni for our college.</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center text-xl mb-4"><i class="fa-regular fa-handshake"></i></div>
+                        <h3 class="font-bold text-xl mb-2">1:1 Mentorship</h3>
+                        <p class="text-gray-500">Book 15-minute slots with seniors to review your resume or mock interview.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // --- 6. RENDER FUNCTIONS ---
+
+        window.router = async (route) => {
+            appContainer.innerHTML = '<div class="flex justify-center pt-20"><div class="loader"></div></div>';
+            
+            switch(route) {
+                case 'home':
+                    appContainer.innerHTML = homeView;
+                    break;
+
+                case 'mentors':
+                    await renderMentors();
+                    break;
+
+                case 'jobs':
+                    await renderJobs();
+                    break;
+                
+                case 'stories':
+                    await renderStories();
+                    break;
+            }
+        };
+
+        async function renderMentors() {
+            // Layout
+            let html = `
+                <div class="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-900">Find a Mentor</h2>
+                        <p class="text-gray-500">Connect with alumni who have walked the path before you.</p>
+                    </div>
+                    <div class="relative w-full sm:w-96">
+                        <input type="text" id="mentor-search" oninput="filterMentors()" placeholder="Search by Company, Role, or Name..." class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-sm">
+                        <i class="fa-solid fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                    </div>
+                </div>
+                <div id="mentor-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards Injected Here -->
+                </div>
+            `;
+            appContainer.innerHTML = html;
+
+            // Fetch Data
+            try {
+                // Simple query: Get all users, then filter in memory for 'Alumni' to be safe with indexes
+                const querySnapshot = await getDocs(COLLECTIONS.USERS);
+                const mentors = [];
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    // Adding ID for referencing
+                    data.uid = doc.id; 
+                    if(data.role === 'Alumni') {
+                        mentors.push(data);
+                    }
+                });
+
+                const grid = document.getElementById('mentor-grid');
+                if (mentors.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">No alumni found yet. Be the first to sign up!</div>`;
+                    return;
+                }
+
+                // Store for filtering
+                window.allMentors = mentors; 
+
+                // Render Cards
+                renderMentorCards(mentors);
+
+            } catch (error) {
+                console.error("Error fetching mentors:", error);
+                document.getElementById('mentor-grid').innerHTML = `<div class="text-red-500">Error loading data. ${error.message}</div>`;
+            }
+        }
+
+        window.renderMentorCards = (mentors) => {
+            const grid = document.getElementById('mentor-grid');
+            grid.innerHTML = mentors.map(m => `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center">
+                            <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg mr-3">
+                                ${m.name.charAt(0)}
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-900">${m.name}</h3>
+                                <p class="text-sm text-gray-500">Class of ${m.gradYear}</p>
+                            </div>
+                        </div>
+                        ${(m.company === 'Google' || m.company === 'Microsoft' || m.company === 'Amazon') ? '<i class="fa-solid fa-check-circle text-blue-500" title="Verified Top Tech"></i>' : ''}
+                    </div>
+                    <div class="mb-4">
+                        <div class="text-sm font-semibold text-gray-800"><i class="fa-solid fa-briefcase mr-2 text-gray-400"></i>${m.jobTitle}</div>
+                        <div class="text-sm text-gray-600 ml-6">@ ${m.company}</div>
+                    </div>
+                    <button onclick="openMentorModal('${m.uid}', '${m.name}')" class="mt-auto w-full py-2 border border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition">
+                        Request Mentorship
+                    </button>
+                </div>
+            `).join('');
+        };
+
+        window.filterMentors = () => {
+            const term = document.getElementById('mentor-search').value.toLowerCase();
+            const filtered = window.allMentors.filter(m => 
+                m.name.toLowerCase().includes(term) || 
+                (m.company && m.company.toLowerCase().includes(term)) || 
+                (m.jobTitle && m.jobTitle.toLowerCase().includes(term))
+            );
+            renderMentorCards(filtered);
+        };
+
+        async function renderJobs() {
+            const isAlumni = currentUser && currentUser.role === 'Alumni';
+            
+            let html = `
+                <div class="mb-8 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-900">Job Board</h2>
+                        <p class="text-gray-500">Opportunities curated by alumni for our college.</p>
+                    </div>
+                    ${isAlumni ? `<button onclick="openModal('post-job-modal')" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 shadow-md"><i class="fa-solid fa-plus mr-2"></i>Post Job</button>` : ''}
+                </div>
+                <div id="job-list" class="space-y-4">
+                    <!-- Jobs Injected Here -->
+                </div>
+            `;
+            appContainer.innerHTML = html;
+
+            try {
+                // Use simple query then sort in memory to avoid missing index errors in hackathon environment
+                const querySnapshot = await getDocs(COLLECTIONS.JOBS);
+                const list = document.getElementById('job-list');
+                
+                if (querySnapshot.empty) {
+                    list.innerHTML = `<div class="text-center py-10 text-gray-500 bg-white rounded-xl border">No active job postings.</div>`;
+                    return;
+                }
+
+                let jobs = [];
+                querySnapshot.forEach(doc => jobs.push(doc.data()));
+                
+                // Sort by timestamp desc
+                jobs.sort((a,b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+
+                let itemsHtml = '';
+                jobs.forEach((j) => {
+                    const date = j.timestamp ? new Date(j.timestamp.seconds * 1000).toLocaleDateString() : 'Recently';
+                    itemsHtml += `
+                        <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center hover:border-blue-200 transition">
+                            <div class="mb-4 md:mb-0">
+                                <h3 class="font-bold text-lg text-gray-900">${j.title}</h3>
+                                <p class="text-blue-600 font-medium">${j.company}</p>
+                                <p class="text-sm text-gray-500 mt-1 line-clamp-2 max-w-xl">${j.description}</p>
+                                <div class="text-xs text-gray-400 mt-2">Posted ${date}</div>
+                            </div>
+                            <a href="${j.applyLink}" target="_blank" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition">Apply Now</a>
+                        </div>
+                    `;
+                });
+                list.innerHTML = itemsHtml;
+
+            } catch (error) {
+                console.error("Error fetching jobs:", error);
+                document.getElementById('job-list').innerHTML = `<div class="text-red-500">Error loading jobs.</div>`;
+            }
+        }
+
+        async function renderStories() {
+             appContainer.innerHTML = `
+                <div class="max-w-3xl mx-auto">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Success Stories</h2>
+                    <div class="space-y-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <div class="flex items-center mb-4">
+                                <div class="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold mr-3">S</div>
+                                <div><h4 class="font-bold">Sarah Jenkins</h4><p class="text-xs text-gray-500">SDE II @ Amazon</p></div>
+                            </div>
+                            <p class="text-gray-700">"The alumni network helped me crack the Amazon interview. I connected with a senior who mocked my interview twice. Don't hesitate to reach out!"</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border">
+                            <div class="flex items-center mb-4">
+                                <div class="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold mr-3">M</div>
+                                <div><h4 class="font-bold">Mike Ross</h4><p class="text-xs text-gray-500">Associate @ Pearson Specter</p></div>
+                            </div>
+                            <p class="text-gray-700">"I found my mentor here who guided me through law school applications. The guidance was invaluable."</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+
+        // --- 7. AUTHENTICATION LOGIC (SIMULATED) ---
+        
+        function updateAuthUI() {
+            if (currentUser) {
+                loggedInNav.classList.remove('hidden');
+                loggedOutNav.classList.add('hidden');
+                document.getElementById('user-display-name').textContent = currentUser.name.split(' ')[0];
+            } else {
+                loggedInNav.classList.add('hidden');
+                loggedOutNav.classList.remove('hidden');
+            }
+        }
+
+        window.logoutUser = () => {
+            currentUser = null;
+            localStorage.removeItem('alumni_bridge_user');
+            updateAuthUI();
+            showToast('Logged out successfully');
+            router('home');
+        };
+
+        // Handle Signup (Create Document in Public Collection)
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value; // In real app, never store plain text
+            const name = document.getElementById('signup-name').value;
+            const role = document.querySelector('input[name="role"]:checked').value;
+            
+            try {
+                // Check if user already exists
+                const q = query(COLLECTIONS.USERS, where("email", "==", email));
+                const existing = await getDocs(q);
+                if(!existing.empty) {
+                    throw new Error("User with this email already exists.");
+                }
+
+                const newUser = {
+                    name: name,
+                    email: email,
+                    password: password, // Demo only
+                    role: role,
+                    createdAt: new Date()
+                };
+
+                if (role === 'Student') {
+                    newUser.major = document.getElementById('signup-major').value;
+                    newUser.year = document.getElementById('signup-year').value;
+                } else {
+                    newUser.company = document.getElementById('signup-company').value;
+                    newUser.jobTitle = document.getElementById('signup-job').value;
+                    newUser.gradYear = document.getElementById('signup-gradyear').value;
+                }
+
+                // Create the user document
+                const docRef = await addDoc(COLLECTIONS.USERS, newUser);
+                
+                // Login immediately
+                currentUser = { ...newUser, uid: docRef.id };
+                localStorage.setItem('alumni_bridge_user', JSON.stringify(currentUser));
+                
+                updateAuthUI();
+                closeModal('signup-modal');
+                showToast('Account created! Welcome, ' + name, 'success');
+                router('mentors'); 
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        // Handle Login (Query Public Collection)
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            
+            try {
+                // Simulate Login Query
+                const q = query(COLLECTIONS.USERS, where("email", "==", email));
+                const snapshot = await getDocs(q);
+                
+                if (snapshot.empty) {
+                    throw new Error("User not found.");
+                }
+
+                let foundUser = null;
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if(data.password === password) {
+                        foundUser = { ...data, uid: doc.id };
+                    }
+                });
+
+                if (!foundUser) {
+                    throw new Error("Incorrect password.");
+                }
+
+                currentUser = foundUser;
+                localStorage.setItem('alumni_bridge_user', JSON.stringify(currentUser));
+                
+                updateAuthUI();
+                closeModal('login-modal');
+                showToast('Welcome back!', 'success');
+                router('mentors');
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        });
+
+        // --- 8. FORM HANDLERS (POSTING) ---
+
+        document.getElementById('post-job-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser || currentUser.role !== 'Alumni') {
+                showToast('Only Alumni can post jobs.', 'error');
+                return;
+            }
+
+            try {
+                await addDoc(COLLECTIONS.JOBS, {
+                    title: document.getElementById('job-title').value,
+                    company: document.getElementById('job-company').value,
+                    applyLink: document.getElementById('job-link').value,
+                    description: document.getElementById('job-desc').value,
+                    postedByUid: currentUser.uid,
+                    timestamp: new Date()
+                });
+                closeModal('post-job-modal');
+                showToast('Job posted successfully!', 'success');
+                renderJobs(); // Refresh
+                e.target.reset();
+            } catch (error) {
+                console.error(error);
+                showToast('Error posting job.', 'error');
+            }
+        });
+
+        document.getElementById('mentor-request-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUser) {
+                showToast('Please login first', 'error');
+                return;
+            }
+
+            const mentorId = document.getElementById('mentor-id-target').value;
+            const msg = document.getElementById('mentor-msg').value;
+
+            try {
+                await addDoc(COLLECTIONS.REQUESTS, {
+                    mentorId: mentorId,
+                    studentId: currentUser.uid,
+                    studentName: currentUser.name,
+                    message: msg,
+                    status: 'pending',
+                    timestamp: new Date()
+                });
+                closeModal('mentor-modal');
+                showToast('Request sent to mentor!', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast('Error sending request', 'error');
+            }
+        });
+
+        // --- 9. UI UTILITIES ---
+
+        window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+        
+        window.switchAuthModal = (closeId, openId) => {
+            closeModal(closeId);
+            openModal(openId);
+        };
+
+        window.toggleSignupFields = () => {
+            const role = document.querySelector('input[name="role"]:checked').value;
+            if (role === 'Student') {
+                document.getElementById('student-fields').classList.remove('hidden');
+                document.getElementById('alumni-fields').classList.add('hidden');
+            } else {
+                document.getElementById('student-fields').classList.add('hidden');
+                document.getElementById('alumni-fields').classList.remove('hidden');
+            }
+        };
+
+        window.openMentorModal = (uid, name) => {
+            if(!currentUser) {
+                showToast("Please Log In to request mentorship", "error");
+                openModal('login-modal');
+                return;
+            }
+            document.getElementById('mentor-id-target').value = uid;
+            document.getElementById('mentor-name-target').innerText = name;
+            openModal('mentor-modal');
+        };
+
+        window.showToast = (message, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-green-600' : 'bg-red-500';
+            
+            toast.className = `toast mb-3 px-6 py-3 rounded-lg shadow-lg text-white font-medium ${bgClass}`;
+            toast.innerText = message;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Remove
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        // --- 10. START APP ---
+        initApp();
+
+    </script>
+</body>
+</html>
